@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from mongoengine import (
-    Document, IntField, ReferenceField, StringField, EnumField, DateTimeField)
+    Document, IntField, ReferenceField, StringField, EnumField, DateTimeField, FloatField)
 
 from .dispute import Dispute
 
@@ -19,5 +19,6 @@ class Deposit(Document):
     method = IntField(required=True)
     payment_url = StringField()
     invoice_id = StringField()
+    coin_amount = FloatField()
     status = EnumField(DepositStatus, default=DepositStatus.CREATED)
     date = DateTimeField(default=datetime.utcnow)

@@ -3,8 +3,7 @@ import time
 import os
 from datetime import datetime, timedelta
 
-from payout import PayoutStatus
-
+from .payout import PayoutStatus
 from .deposit import DepositStatus
 
 CHATEX_API_LINK = "https://api.staging.iserverbot.ru/v1"
@@ -32,20 +31,26 @@ async def getPaymentMethods():
     await check_auth()
     request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
     request = requests.get(CHATEX_API_LINK+'/payment-systems', headers=request_headers)
-    return request.json()[:10]
+    if(request.status_code != 200):
+        print(request, request.text)
+        raise Exception("Can't get payment methods")
+    return request.json()
 
 async def getPaymentLink(deposit):
     await check_auth()
     request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
     request_data = {
         "fiat_amount": deposit.dispute.amount,
-        "coin": "BTC",
+        "coin": "btc",
         "country_code": "RUS",
-        "fiat": "RUB",
+        "fiat": "rub",
         "lang_id": "RU",
         "payment_system_id": deposit.method,
     }
     request = requests.post(CHATEX_API_LINK+'/invoices', json=request_data, headers=request_headers)
+    if(request.status_code != 201):
+        print(request_data, request, request.text)
+        raise Exception("Can't get payment link")
     data = request.json()
     deposit.invoice_id = data['id']
     deposit.payment_url = data['payment_url']
@@ -59,9 +64,13 @@ async def updatePayment(deposit):
     await check_auth()
     request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
     request = requests.get(CHATEX_API_LINK+'/invoices/'+deposit.invoice_id, headers=request_headers)
+    if(request.status_code != 200):
+        print(request, request.text)
+        raise Exception("Can't update payment")
     data = request.json()
     if(data['status'] == "COMPLETED"):
         deposit.status = DepositStatus.SUCCESS
+        deposit.coin_amount = float(data['amount'])
         deposit.save()
     elif(data['status'] == "CANCELED"):
         deposit.status = DepositStatus.CANCELED
@@ -72,20 +81,15 @@ async def makePayout(payout):
     await check_auth()
     request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
     request_data = {
-        "pair": "btc/rub",
-        "fiat_amount": payout.amount,
-        "payment_details": payout.data,
-        "payment_system_id": payout.method,
+        "coin": "btc",
+        "amount": payout.amount,
+        "recipient": payout.data
     }
-    request = requests.get(CHATEX_API_LINK+'/payouts', json=request_data, headers=request_headers)
+    request = requests.post(CHATEX_API_LINK+'/wallet/transfers', json=request_data, headers=request_headers)
+    if(request.status_code != 200):
+        print(request_data, request, request.text)
+        raise Exception("Can't make payout")
     data = request.json()
-    payout.payout_id = data['id']
-    if(data['status'] == "FAILED"):
-        payout.description = data['cancelation_reason']
-        payout.status = PayoutStatus.FAILED
-    else:
-        payout.status = PayoutStatus.PENDING
+    payout.status = PayoutStatus.SUCCESS
     payout.save()
     return payout
-
-#async def updatePayout

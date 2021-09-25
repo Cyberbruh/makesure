@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from mongoengine import (
-    Document, ReferenceField, IntField, StringField, EnumField, DateTimeField)
+    Document, ReferenceField, IntField, StringField, EnumField, DateTimeField, FloatField)
 
 from .dispute import Dispute
 
@@ -9,16 +9,11 @@ from .dispute import Dispute
 class PayoutStatus(Enum):
     CREATED = 1
     SUCCESS = 2
-    PENDING = 3
-    FAILED = 4
 
 
 class Payout(Document):
     dispute = ReferenceField(Dispute, required=True)
-    method = IntField(required=True)
-    amount = IntField(required=True)
+    amount = FloatField(required=True)
     data = StringField(required=True)
-    payout_id = StringField()
-    description = StringField()
     status = EnumField(PayoutStatus, default=PayoutStatus.CREATED)
     date = DateTimeField(default=datetime.utcnow)
