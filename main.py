@@ -4,6 +4,7 @@ Main entripoint of a bot.
 
 import os
 import discord
+import asyncio
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
 from dotenv import load_dotenv
@@ -12,6 +13,7 @@ from mongoengine import connect
 import src.chatex
 
 from src.dispute import Dispute, DisputeStatus
+from src.deposit import Deposit
 
 
 
@@ -29,14 +31,12 @@ async def on_ready():
 
 async def dialog(usr, members):
 
-    def from_user(m):
-        return m.author == usr
-    opponent_tag = await bot.wait_for("message", check=from_user)
+    opponent_tag = await bot.wait_for("message", check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
     opponent = None
     await usr.send('Введите сумму вашего взноса')
-    fee = await bot.wait_for('message', check=from_user)
+    fee = await bot.wait_for('message', check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
     await usr.send('Опишите суть вашего спора')
-    desc = await bot.wait_for('message', check=from_user)
+    desc = await bot.wait_for('message', check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
     for m in members:
         if (m.name + '#' + m.discriminator) == opponent_tag.content:
             opponent = m
@@ -48,26 +48,73 @@ async def dialog(usr, members):
     dispute = Dispute(user1_id=usr.id, user2_id=opponent.id, description=desc.content,
                       amount=int(fee.content), status=DisputeStatus.CREATED, date=datetime.datetime.now())
     #dispute.save()
-
-    def from_opponent(m):
-        return m.author == opponent
-    res = await bot.wait_for('button_click', check=from_opponent)
+    res = await bot.wait_for('button_click', check= lambda msg: (msg.author == opponent) & isinstance(msg.channel, discord.DMChannel))
     if res.component.label == 'Да':
         await usr.send(f'Спор c {opponent.name} начат!')
         await res.respond(content=f'Спор с {usr.name} начат!')
-        await run_dispute(usr, opponent)
+        await run_dispute(usr, opponent, dispute)
     else:
         await usr.send('Оппонент отклонил спор!')
         await res.respond(content='Спор отклонен!')
 
 
-async def run_dispute(usr1, usr2):
-    comps = []
-    paySysList = (await src.chatex.getPaymentMethods())
-    for i in range(5):
-        comps.append(Button(style=ButtonStyle.gray, label=paySysList[i]['name']))
-    await usr1.send(embed=discord.Embed(title='Выберите платежную систему'), components=[comps])
-    await usr2.send(embed=discord.Embed(title='Выберите платежную систему'), components=[comps])
+async def run_dispute(usr1, usr2, dispute):
+
+    tasks = [asyncio.create_task(get_payment(usr1, dispute)), asyncio.create_task(get_payment(usr2, dispute))]
+    await asyncio.wait(tasks)
+    tasks = [asyncio.create_task(get_dispute_results(usr1, dispute)), asyncio.create_task(get_dispute_results(usr2, dispute))]
+    await asyncio.wait(tasks)
+    if (tasks[0].result() == 'Победитель') & (tasks[1].result() == 'Проигравший'):
+        await end_dispute(usr1, usr2, dispute)
+    elif (tasks[0].result() == 'Проигравший') & (tasks[0].result() == 'Победитель'):
+        await end_dispute(usr2, usr1, dispute)
+    elif (tasks[0].result() == 'Проигравший') & (tasks[0].result() == 'Проигравший'):
+        await return_fee(usr1, usr2, dispute)
+    else:
+        await judge(usr1, usr2, dispute)
+
+async def judge(usr1, usr2, dispute):
+    pass
+
+
+async def end_dispute(winner, loser, dispute):
+    pass
+
+
+async def return_fee(usr1, usr2, dispute):
+    pass
+
+async def get_dispute_results(usr, dispute):
+    await usr.send(embed=discord.Embed(title='После окончания спора укажите ваш статус по его итогам'), components=[[
+        Button(style=ButtonStyle.green, label='Победитель'),
+        Button(style=ButtonStyle.red, label='Проигравший')
+    ]])
+    usr.send('Ждем ответа вашего оппонента...')
+    return (await bot.wait_for('button_click', check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))).label
+
+async def get_payment(usr, dispute):
+    dep = Deposit(user_id=usr.id, dispute=dispute)
+    while dep.status != DisputeStatus.ACCEPTED:
+        comps = []
+        paySysList = await src.chatex.getPaymentMethods()
+        ids = dict()
+        for i in range(5):
+            comps.append(Button(style=ButtonStyle.gray, label=paySysList[i]['name']))
+            ids[paySysList[i]['name']] = paySysList[i]['id']
+        await usr.send(embed=discord.Embed(title='Выберите платежную систему'), components=[comps])
+        res = await bot.wait_for('button_click', check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
+        dep.method = 347
+        dep = await src.chatex.getPaymentLink(dep)
+        await res.respond(content=f'Перейдите по ссылки и проведите оплату взноса: {dep.payment_url}')
+        await usr.send(embed=discord.Embed(title='Нажмите на кнопку для подтверждения оплаты'), components=[[Button(style=ButtonStyle.grey, label='Подтвердить')]])
+        res = await bot.wait_for('button_click', check = lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
+        if res.component.label == 'Подтвердить':
+            dep = await src.chatex.updatePayment(dep)
+            if dep.status != DisputeStatus.ACCEPTED:
+                await res.respond(content='Оплата не удалась! Повторите попытку.')
+            else:
+                await res.respond(content='Оплата прошла успешно!')
+
 
 
 @bot.command()
