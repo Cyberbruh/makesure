@@ -1,15 +1,18 @@
-from datetime import *
-from enum import *
-from mongoengine import *
+from datetime import datetime
+from enum import Enum
+from mongoengine import (
+    Document, ReferenceField, IntField, StringField, EnumField, DateTimeField)
 
 from .dispute import Dispute
+
 
 class PayoutStatus(Enum):
     CREATED = 1
     SUCCESS = 2
 
+
 class Payout(Document):
-    disput = ReferenceField(Dispute)
+    dispute = ReferenceField(Dispute)
     method = IntField(required=True)
     data = StringField(required=True)
     status = EnumField(PayoutStatus, default=PayoutStatus.CREATED)

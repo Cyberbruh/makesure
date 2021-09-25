@@ -1,6 +1,8 @@
-from datetime import *
-from enum import *
-from mongoengine import *
+from datetime import datetime
+from enum import Enum
+from mongoengine import (
+    Document, IntField, StringField, EnumField, DateTimeField)
+
 
 class DisputeStatus(Enum):
     CREATED = 1
@@ -11,6 +13,7 @@ class DisputeStatus(Enum):
     WIN1 = 6
     WIN2 = 7
     REPORTED = 8
+
 
 class Dispute(Document):
     user1_id = IntField(required=True)

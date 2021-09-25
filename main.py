@@ -1,3 +1,7 @@
+"""
+Main entripoint of a bot.
+"""
+
 import os
 import discord
 from discord.ext import commands
@@ -7,6 +11,9 @@ from mongoengine import connect
 
 from src.dispute import Dispute, DisputeStatus
 
+
+
+# Load variables from .env file
 load_dotenv()
 
 dialogs = []
@@ -48,6 +55,9 @@ async def dialog(usr, members):
 
 @bot.command()
 async def start(ctx):
+    """
+    Start command. User begins interaction with the bot with this command.
+    """
     await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
     members = ctx.guild.members
     await dialog(ctx.author, members)
@@ -58,5 +68,4 @@ db_host = os.environ.get('MONGO_HOST')
 db_port = os.environ.get('MONGO_PORT')
 db_name = os.environ.get('MONGO_DATABASE')
 connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}')
-
 bot.run(os.environ.get('DISCORD_TOKEN'))
