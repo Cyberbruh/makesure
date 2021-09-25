@@ -21,7 +21,10 @@ payout
     dispute: Dispute
     method: int
     data: string
-    status: enum(CREATED, SUCCESS)
+    amount: int
+    payout_id: string,
+    description: string,
+    status: enum(CREATED, PENDING, SUCCESS, FAILED)
 
 proof
     id: string

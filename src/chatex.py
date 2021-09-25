@@ -3,6 +3,8 @@ import time
 import os
 from datetime import datetime, timedelta
 
+from payout import PayoutStatus
+
 from .deposit import DepositStatus
 
 CHATEX_API_LINK = "https://api.staging.iserverbot.ru/v1"
@@ -65,3 +67,25 @@ async def updatePayment(deposit):
         deposit.status = DepositStatus.CANCELED
         deposit.save()
     return deposit
+
+async def makePayout(payout):
+    await check_auth()
+    request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
+    request_data = {
+        "pair": "btc/rub",
+        "fiat_amount": payout.amount,
+        "payment_details": payout.data,
+        "payment_system_id": payout.method,
+    }
+    request = requests.get(CHATEX_API_LINK+'/payouts', json=request_data, headers=request_headers)
+    data = request.json()
+    payout.payout_id = data['id']
+    if(data['status'] == "FAILED"):
+        payout.description = data['cancelation_reason']
+        payout.status = PayoutStatus.FAILED
+    else:
+        payout.status = PayoutStatus.PENDING
+    payout.save()
+    return payout
+
+#async def updatePayout
