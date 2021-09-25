@@ -3,19 +3,20 @@ Main entripoint of a bot.
 """
 
 import os
+import urllib
 import discord
 import asyncio
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
 from dotenv import load_dotenv
 import datetime
-from mongoengine import connect
+from mongoengine import *
 import src.chatex
 
 from src.dispute import Dispute, DisputeStatus
-from src.deposit import Deposit
-
-
+from src.proof import Proof
+from src.deposit import Deposit, DepositStatus
+from src.payout import Payout
 
 # Load variables from .env file
 load_dotenv()
@@ -117,21 +118,28 @@ async def get_payment(usr, dispute):
 
 
 
-@bot.command()
-async def start(ctx):
-    """
-    Start command. User begins interaction with the bot with this command.
-    """
-    await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
-    members = ctx.guild.members
-    await dialog(ctx.author, members)
+# @bot.command(name="start")
+# async def start(ctx):
+#     """
+#     Start command. User begins interaction with the bot with this command.
+#     """
+#     await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
+#     members = ctx.guild.members
+#     await dialog(ctx.author, members)
 
+exec(open("tmp/admin.py", encoding="utf-8").read())
 
-db_username = os.environ.get('MONGO_USERNAME')
-db_password = os.environ.get('MONGO_PASSWORD')
-db_host = os.environ.get('MONGO_HOST')
-db_port = os.environ.get('MONGO_PORT')
-db_name = os.environ.get('MONGO_DATABASE')
-#connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}')
+db_connect_url = os.environ.get('MONGO_LINK')
+
+if db_connect_url is None:
+    db_username = os.environ.get('MONGO_USERNAME')
+    db_password = urllib.parse.quote(os.environ.get('MONGO_PASSWORD'))
+    db_host = os.environ.get('MONGO_HOST')
+    db_port = os.environ.get('MONGO_PORT')
+    db_name = os.environ.get('MONGO_DATABASE')
+    connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?authSource=admin')
+else:
+    connect(host=db_connect_url)
+
 bot.run(os.environ.get('DISCORD_TOKEN'))
 
