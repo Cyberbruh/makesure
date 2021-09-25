@@ -29,9 +29,7 @@ DiscordComponents(bot)
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
-
 async def dialog(usr, members):
-
     opponent_tag = await bot.wait_for("message", check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
     opponent = None
     await usr.send('Введите сумму вашего взноса')
@@ -48,7 +46,7 @@ async def dialog(usr, members):
     ]])
     dispute = Dispute(user1_id=usr.id, user2_id=opponent.id, description=desc.content,
                       amount=int(fee.content), status=DisputeStatus.CREATED, date=datetime.datetime.now())
-    #dispute.save()
+    dispute.save()
     res = await bot.wait_for('button_click', check= lambda msg: (msg.author == opponent) & isinstance(msg.channel, discord.DMChannel))
     if res.component.label == 'Да':
         await usr.send(f'Спор c {opponent.name} начат!')
@@ -77,10 +75,8 @@ async def run_dispute(usr1, usr2, dispute):
 async def judge(usr1, usr2, dispute):
     pass
 
-
 async def end_dispute(winner, loser, dispute):
     pass
-
 
 async def return_fee(usr1, usr2, dispute):
     pass
@@ -117,15 +113,14 @@ async def get_payment(usr, dispute):
                 await res.respond(content='Оплата прошла успешно!')
 
 
-
-# @bot.command(name="start")
-# async def start(ctx):
-#     """
-#     Start command. User begins interaction with the bot with this command.
-#     """
-#     await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
-#     members = ctx.guild.members
-#     await dialog(ctx.author, members)
+@bot.command(name="start")
+async def start(ctx):
+    """
+    Start command. User begins interaction with the bot with this command.
+    """
+    await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
+    members = ctx.guild.members
+    await dialog(ctx.author, members)
 
 exec(open("tmp/admin.py", encoding="utf-8").read())
 
@@ -142,4 +137,3 @@ else:
     connect(host=db_connect_url)
 
 bot.run(os.environ.get('DISCORD_TOKEN'))
-

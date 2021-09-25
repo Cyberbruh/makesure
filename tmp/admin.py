@@ -1,5 +1,6 @@
 @bot.command(name="admin")
 async def admin(ctx):
+    print(1234123)
     """
     Admin command. Admin starts to look up reported disputes
     """
