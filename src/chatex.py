@@ -2,7 +2,6 @@ import requests
 import time
 import os
 from datetime import datetime, timedelta
-
 from .deposit import DepositStatus
 
 CHATEX_API_LINK = "https://api.staging.iserverbot.ru/v1"
