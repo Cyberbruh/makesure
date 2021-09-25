@@ -1,17 +1,28 @@
 disputes
-    user1: int
-    user2: int
+    id: string
+    user1_id: string
+    user2_id: string
     description: string
     amount: int
     date: dateTime
 
 proofs
+    id: string
     description: string
-    user_id: int
-    dispute_id: int
+    user_id: string
+    dispute_id: string
     date: dateTime
 
-pays
-    user_id: int
-    dispute_id: int
+deposits
+    id: string
+    user_id: string
+    dispute_id: string
+    method: int
     status: enum(CREATED, SENT, SUCCESS)
+
+payouts
+    id: string
+    disput_id: string
+    method: int
+    data: string
+    status: enum(CREATED, SUCCESS)
