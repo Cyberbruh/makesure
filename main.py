@@ -29,8 +29,12 @@ DiscordComponents(bot)
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
+<<<<<<< Updated upstream
 
 async def dialog(usr, members):
+=======
+async def dialog(usr, tel1, members):
+>>>>>>> Stashed changes
 
     opponent_tag = await bot.wait_for("message", check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
     opponent = None
@@ -53,12 +57,15 @@ async def dialog(usr, members):
     if res.component.label == 'Да':
         await usr.send(f'Спор c {opponent.name} начат!')
         await res.respond(content=f'Спор с {usr.name} начат!')
-        await run_dispute(usr, opponent, dispute)
+        await res.author.send('Укажи, пожалуйста, свой номер телефона, привязанный к аккаунту в Chatex:')
+        tel2 = await bot.wait_for('message', check = lambda msg: (msg.author == opponent) & (isinstance(msg.channel, discord.DMChannel)))
+        await run_dispute(usr, opponent, tel1, tel2, dispute)
     else:
         await usr.send('Оппонент отклонил спор!')
         await res.respond(content='Спор отклонен!')
 
 
+<<<<<<< Updated upstream
 async def run_dispute(usr1, usr2, dispute):
 
     tasks = [asyncio.create_task(get_payment(usr1, dispute)), asyncio.create_task(get_payment(usr2, dispute))]
@@ -68,8 +75,16 @@ async def run_dispute(usr1, usr2, dispute):
     if (tasks[0].result() == 'Победитель') & (tasks[1].result() == 'Проигравший'):
         await end_dispute(usr1, usr2, dispute)
     elif (tasks[0].result() == 'Проигравший') & (tasks[0].result() == 'Победитель'):
+=======
+async def run_dispute(usr1, usr2, tel1, tel2, dispute):
+    await asyncio.gather(get_payment(usr1, dispute), get_payment(usr2, dispute))
+    res1, res2 = await asyncio.gather(get_dispute_results(usr1, dispute), get_dispute_results(usr2, dispute))
+    if (res1 == 'Победитель') & (res2 == 'Проигравший'):
+        await end_dispute(usr1, usr2, tel1, tel2, dispute)
+    elif (res1 == 'Проигравший') & (res2 == 'Победитель'):
+>>>>>>> Stashed changes
         await end_dispute(usr2, usr1, dispute)
-    elif (tasks[0].result() == 'Проигравший') & (tasks[0].result() == 'Проигравший'):
+    elif (res1 == 'Проигравший') & (res2 == 'Проигравший'):
         await return_fee(usr1, usr2, dispute)
     else:
         await judge(usr1, usr2, dispute)
@@ -81,6 +96,12 @@ async def judge(usr1, usr2, dispute):
 async def end_dispute(winner, loser, dispute):
     pass
 
+<<<<<<< Updated upstream
+=======
+async def win(usr, tel, dispute):
+    await usr.send(f'Поздравляю, ты выиграл(а). Тебе будет перечислено {dispute.amount} тугриков.')
+    
+>>>>>>> Stashed changes
 
 async def return_fee(usr1, usr2, dispute):
     pass
@@ -90,8 +111,9 @@ async def get_dispute_results(usr, dispute):
         Button(style=ButtonStyle.green, label='Победитель'),
         Button(style=ButtonStyle.red, label='Проигравший')
     ]])
+    res = await bot.wait_for('button_click', check=lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))
     usr.send('Ждем ответа вашего оппонента...')
-    return (await bot.wait_for('button_click', check= lambda msg: (msg.author == usr) & isinstance(msg.channel, discord.DMChannel))).label
+    return res.label
 
 async def get_payment(usr, dispute):
     dep = Deposit(user_id=usr.id, dispute=dispute)
@@ -118,6 +140,7 @@ async def get_payment(usr, dispute):
 
 
 
+<<<<<<< Updated upstream
 # @bot.command(name="start")
 # async def start(ctx):
 #     """
@@ -126,6 +149,18 @@ async def get_payment(usr, dispute):
 #     await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
 #     members = ctx.guild.members
 #     await dialog(ctx.author, members)
+=======
+@bot.command(name="start")
+async def start(ctx):
+    """
+    Start command. User begins interaction with the bot with this command.
+    """
+    await ctx.author.send('Привет! Я бот для заключения споров. Введи, пожалуйста, номер телефона, привязанный к твоему аккаунту в Chatex:')
+    tel = await bot.wait_for('message', check = lambda msg: (msg.author == ctx.author) & (isinstance(msg.channel, discord.DMChannel)))
+    await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
+    members = ctx.guild.members
+    await dialog(ctx.author, tel, members)
+>>>>>>> Stashed changes
 
 exec(open("tmp/admin.py", encoding="utf-8").read())
 
