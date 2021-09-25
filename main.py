@@ -5,9 +5,11 @@ Main entripoint of a bot.
 import os
 import discord
 from discord.ext import commands
+from discord_components import DiscordComponents, Button, ButtonStyle
 from dotenv import load_dotenv
 import datetime
 from mongoengine import connect
+import src.chatex
 
 from src.dispute import Dispute, DisputeStatus
 
@@ -16,10 +18,9 @@ from src.dispute import Dispute, DisputeStatus
 # Load variables from .env file
 load_dotenv()
 
-dialogs = []
-
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
+DiscordComponents(bot)
 
 @bot.event
 async def on_ready():
@@ -40,17 +41,23 @@ async def dialog(usr, members):
         if (m.name + '#' + m.discriminator) == opponent_tag.content:
             opponent = m
     await opponent.send(f'{usr.name} вызывает вас на спор. Сумма ставки {fee.content} тугриков. {desc.content}')
-    await opponent.send('Вы согласны? Да/Нет')
+    await opponent.send(embed=discord.Embed(title='Вы согласны на условия спора?'), components=[[
+        Button(style=ButtonStyle.green, label='Да'),
+        Button(style=ButtonStyle.red, label='Нет')
+    ]])
     dispute = Dispute(user1_id=usr.id, user2_id=opponent.id, description=desc.content,
                       amount=int(fee.content), status=DisputeStatus.CREATED, date=datetime.datetime.now())
-    dispute.save()
+    #dispute.save()
 
     def from_opponent(m):
         return m.author == opponent
-    res = await bot.wait_for('message', check=from_opponent)
-    if res.content == 'Да':
-        await usr.send('Спор c {opponent.name} начат!')
-        await opponent.send('Спор с {usr.name} начат!')
+    res = await bot.wait_for('button_click', check=from_opponent)
+    if res.component.label == 'Да':
+        await usr.send(f'Спор c {opponent.name} начат!')
+        await res.respond(f'Спор с {usr.name} начат!')
+    else:
+        await usr.send('Оппонент отклонил спор!')
+        await res.respond('Спор отклонен!')
 
 
 @bot.command()
@@ -62,10 +69,12 @@ async def start(ctx):
     members = ctx.guild.members
     await dialog(ctx.author, members)
 
+
 db_username = os.environ.get('MONGO_USERNAME')
 db_password = os.environ.get('MONGO_PASSWORD')
 db_host = os.environ.get('MONGO_HOST')
 db_port = os.environ.get('MONGO_PORT')
 db_name = os.environ.get('MONGO_DATABASE')
-connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}')
+#connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}')
 bot.run(os.environ.get('DISCORD_TOKEN'))
+
