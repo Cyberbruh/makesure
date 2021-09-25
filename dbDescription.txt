@@ -5,6 +5,7 @@ disputes
     description: string
     amount: int
     date: dateTime
+    status: enum(CREATED, SENT, GOING, TIE, WIN1, WIN2, REPORTED)
 
 proofs
     id: string
@@ -18,7 +19,7 @@ deposits
     user_id: string
     dispute_id: string
     method: int
-    status: enum(CREATED, SENT, SUCCESS)
+    status: enum(SENT, SUCCESS)
 
 payouts
     id: string

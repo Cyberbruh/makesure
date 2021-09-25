@@ -17,3 +17,9 @@ print(addDispute(db, {"user1": 123,
         "description": "спор по кс",
         "amount": 123,
         "date": datetime.datetime.utcnow()}))
+
+
+def addDispute(db, dispute):
+    id = db.disputes.insert_one(dispute).inserted_id
+    return id
+
