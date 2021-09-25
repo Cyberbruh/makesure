@@ -1,6 +1,6 @@
 import datetime
 
-from dispute import Dispute
+from .dispute import Dispute
 
 class Proof:
     def __init__(self, db, dispute: Dispute, user_id: int, description: int) -> None:

@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from src.dispute import Dispute
+from .dispute import Dispute
 
 class DepositStatus(enum.Enum):
     CREATED = 1

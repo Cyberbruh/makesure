@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from dispute import Dispute
+from .dispute import Dispute
 
 
 class PayoutStatus(enum.Enum):
