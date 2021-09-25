@@ -1,17 +1,19 @@
 import os
 import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+
+import src.mongo
+
+load_dotenv()
 
 client = discord.Client()
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+bot = commands.Bot(command_prefix='!')
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+@bot.command()
+async def start(ctx):
+    author = ctx.message.author
+    await ctx.send(f'Hello, {author.mention}!')
 
-
-import src.commands
-
-client.run(os.environ.get('DISCORD_TOKEN'))
+bot.run(os.getenv('DISCORD_TOKEN'))
