@@ -4,13 +4,15 @@ from mongoengine import *
 
 from .dispute import Dispute
 
-class PayoutStatus(Enum):
+class DepositStatus(Enum):
     CREATED = 1
-    SUCCESS = 2
+    LINK_SENT = 2
+    SUCCESS = 3
 
-class Payout(Document):
+class Deposit(Document):
+    user_id = IntField(required=True)
     disput = ReferenceField(Dispute)
     method = IntField(required=True)
-    data = StringField(required=True)
-    status = EnumField(PayoutStatus, default=PayoutStatus.CREATED)
+    payment_link = StringField(required=True)
+    status = EnumField(DepositStatus, default=DepositStatus.CREATED)
     date = DateTimeField(default=datetime.utcnow)
