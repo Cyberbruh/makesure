@@ -12,8 +12,9 @@ deposit
     user_id: string
     dispute: Dispute
     method: int
-    payment_link: str
-    status: enum(CREATED, LINK_SENT, SUCCESS)
+    payment_url: str
+    invoice_id: string
+    status: enum(CREATED, LINK_SENT, SUCCESS, CANCELED)
 
 payout
     id: string
