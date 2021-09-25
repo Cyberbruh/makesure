@@ -1,0 +1,17 @@
+disputes
+    user1: int
+    user2: int
+    description: string
+    amount: int
+    date: dateTime
+
+proofs
+    description: string
+    user_id: int
+    dispute_id: int
+    date: dateTime
+
+pays
+    user_id: int
+    dispute_id: int
+    status: enum(CREATED, SENT, SUCCESS)
