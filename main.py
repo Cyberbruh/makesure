@@ -9,10 +9,13 @@ from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
 from dotenv import load_dotenv
 import datetime
-from mongoengine import connect
+from mongoengine import *
 import src.chatex
 
 from src.dispute import Dispute, DisputeStatus
+from src.proof import Proof
+from src.deposit import Deposit, DepositStatus
+from src.payout import Payout
 
 # Load variables from .env file
 load_dotenv()
@@ -69,15 +72,16 @@ async def run_dispute(usr1, usr2):
     await usr2.send(embed=discord.Embed(title='Выберите платежную систему'), components=[comps])
 
 
-@bot.command()
-async def start(ctx):
-    """
-    Start command. User begins interaction with the bot with this command.
-    """
-    await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
-    members = ctx.guild.members
-    await dialog(ctx.author, members)
+# @bot.command(name="start")
+# async def start(ctx):
+#     """
+#     Start command. User begins interaction with the bot with this command.
+#     """
+#     await ctx.author.send('Введите тег пользователя, с которым вы хотите начать спор?')
+#     members = ctx.guild.members
+#     await dialog(ctx.author, members)
 
+exec(open("tmp/admin.py", encoding="utf-8").read())
 
 db_connect_url = os.environ.get('MONGO_LINK')
 

@@ -3,7 +3,6 @@ import time
 import os
 from datetime import datetime, timedelta
 
-from .payout import PayoutStatus
 from .deposit import DepositStatus
 
 CHATEX_API_LINK = "https://api.staging.iserverbot.ru/v1"
@@ -28,13 +27,36 @@ async def check_auth():
         stop_api = False
 
 async def getPaymentMethods():
+    tmp = {
+        {
+            "id": 347,
+            "name": "QIWI"
+        },
+        {
+            "id": 347,
+            "name": "Webmoney"
+        },
+        {
+            "id": 347,
+            "name": "Sberbank"
+        },
+        {
+            "id": 347,
+            "name": "Payoneer"
+        },
+        {
+            "id": 347,
+            "name": "Ю.Мани"
+        },
+    }
     await check_auth()
-    request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
-    request = requests.get(CHATEX_API_LINK+'/payment-systems', headers=request_headers)
-    if(request.status_code != 200):
-        print(request, request.text)
-        raise Exception("Can't get payment methods")
-    return request.json()
+    return tmp
+    # request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
+    # request = requests.get(CHATEX_API_LINK+'/payment-systems', headers=request_headers)
+    # if(request.status_code != 200):
+    #     print(request, request.text)
+    #     raise Exception("Can't get payment methods")
+    # return request.json()
 
 async def getPaymentLink(deposit):
     await check_auth()
@@ -89,7 +111,3 @@ async def makePayout(payout):
     if(request.status_code != 200):
         print(request_data, request, request.text)
         raise Exception("Can't make payout")
-    data = request.json()
-    payout.status = PayoutStatus.SUCCESS
-    payout.save()
-    return payout

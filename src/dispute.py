@@ -13,6 +13,7 @@ class DisputeStatus(Enum):
     WIN1 = 6
     WIN2 = 7
     REPORTED = 8
+    JUDGING = 9
 
 
 class Dispute(Document):
