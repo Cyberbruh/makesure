@@ -81,11 +81,18 @@ async def start(ctx):
     await dialog(ctx.author, members)
 
 
-db_username = os.environ.get('MONGO_USERNAME')
-db_password = urllib.parse.quote(os.environ.get('MONGO_PASSWORD'))
-db_host = os.environ.get('MONGO_HOST')
-db_port = os.environ.get('MONGO_PORT')
-db_name = os.environ.get('MONGO_DATABASE')
-connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?authSource=admin')
+db_connect_url = os.environ.get('MONGO_LINK')
+
+if db_connect_url is None:
+    db_username = os.environ.get('MONGO_USERNAME')
+    db_password = urllib.parse.quote(os.environ.get('MONGO_PASSWORD'))
+    db_host = os.environ.get('MONGO_HOST')
+    db_port = os.environ.get('MONGO_PORT')
+    db_name = os.environ.get('MONGO_DATABASE')
+    connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?authSource=admin')
+
+else:
+    connect(host=db_connect_url)
+
 bot.run(os.environ.get('DISCORD_TOKEN'))
 
