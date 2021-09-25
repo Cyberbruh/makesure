@@ -2,7 +2,10 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from pymongo import MongoClient
+import datetime
+from mongoengine import connect
+
+from src.dispute import Dispute, DisputeStatus
 
 load_dotenv()
 
@@ -18,18 +21,29 @@ async def on_ready():
 
 async def dialog(usr, members):
 
-    def check(m):
+    def from_user(m):
         return m.author == usr
-    opponent_tag = await bot.wait_for("message", check=check)
+    opponent_tag = await bot.wait_for("message", check=from_user)
     opponent = None
     await usr.send('Введите сумму вашего взноса')
-    fee = await bot.wait_for('message', check=check)
+    fee = await bot.wait_for('message', check=from_user)
     await usr.send('Опишите суть вашего спора')
-    desc = await bot.wait_for('message', check=check)
+    desc = await bot.wait_for('message', check=from_user)
     for m in members:
         if (m.name + '#' + m.discriminator) == opponent_tag.content:
             opponent = m
     await opponent.send(f'{usr.name} вызывает вас на спор. Сумма ставки {fee.content} тугриков. {desc.content}')
+    await opponent.send('Вы согласны? Да/Нет')
+    dispute = Dispute(user1_id=usr.id, user2_id=opponent.id, description=desc.content,
+                      amount=int(fee.content), status=DisputeStatus.CREATED, date=datetime.datetime.now())
+    dispute.save()
+
+    def from_opponent(m):
+        return m.author == opponent
+    res = await bot.wait_for('message', check=from_opponent)
+    if res.content == 'Да':
+        await usr.send('Спор c {opponent.name} начат!')
+        await opponent.send('Спор с {usr.name} начат!')
 
 
 @bot.command()
@@ -38,7 +52,11 @@ async def start(ctx):
     members = ctx.guild.members
     await dialog(ctx.author, members)
 
-
-
+db_username = os.environ.get('MONGO_USERNAME')
+db_password = os.environ.get('MONGO_PASSWORD')
+db_host = os.environ.get('MONGO_HOST')
+db_port = os.environ.get('MONGO_PORT')
+db_name = os.environ.get('MONGO_DATABASE')
+connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}')
 
 bot.run(os.environ.get('DISCORD_TOKEN'))
