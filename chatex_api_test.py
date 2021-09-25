@@ -16,9 +16,13 @@ import asyncio
 
 load_dotenv()
 
-async def prnt():
-    print((await getPaymentMethods()))
+connect(host="mongodb://127.0.0.1:27017/makesure")
 
-#connect(host="mongodb://127.0.0.1:27017/makesure")
-#dispute = Dispute.objects(id="614f0d7418a09708c0b5075e").first()
-asyncio.run(prnt())
+async def main():
+    dispute = Dispute.objects(id="614f0d7418a09708c0b5075e").first()
+    dep = Deposit(user_id=123, dispute=dispute, method=1)
+    dep.save()
+    dep = await getPaymentLink(dep)
+    dep = await updatePayment(dep)
+    print(dep.status)
+asyncio.run(main())
