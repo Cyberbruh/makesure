@@ -7,17 +7,15 @@ import urllib
 import discord
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
-#from dotenv import load_dotenv
+from dotenv import load_dotenv
 import datetime
 from mongoengine import connect
 import src.chatex
 
 from src.dispute import Dispute, DisputeStatus
 
-
-
 # Load variables from .env file
-#load_dotenv()
+load_dotenv()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -90,7 +88,6 @@ if db_connect_url is None:
     db_port = os.environ.get('MONGO_PORT')
     db_name = os.environ.get('MONGO_DATABASE')
     connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?authSource=admin')
-
 else:
     connect(host=db_connect_url)
 
