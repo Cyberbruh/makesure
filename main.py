@@ -3,10 +3,11 @@ Main entripoint of a bot.
 """
 
 import os
+import urllib
 import discord
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import datetime
 from mongoengine import connect
 import src.chatex
@@ -16,7 +17,7 @@ from src.dispute import Dispute, DisputeStatus
 
 
 # Load variables from .env file
-load_dotenv()
+#load_dotenv()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -47,7 +48,7 @@ async def dialog(usr, members):
     ]])
     dispute = Dispute(user1_id=usr.id, user2_id=opponent.id, description=desc.content,
                       amount=int(fee.content), status=DisputeStatus.CREATED, date=datetime.datetime.now())
-    #dispute.save()
+    dispute.save()
 
     def from_opponent(m):
         return m.author == opponent
@@ -81,10 +82,10 @@ async def start(ctx):
 
 
 db_username = os.environ.get('MONGO_USERNAME')
-db_password = os.environ.get('MONGO_PASSWORD')
+db_password = urllib.parse.quote(os.environ.get('MONGO_PASSWORD'))
 db_host = os.environ.get('MONGO_HOST')
 db_port = os.environ.get('MONGO_PORT')
 db_name = os.environ.get('MONGO_DATABASE')
-#connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}')
+connect(host=f'mongodb://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?authSource=admin')
 bot.run(os.environ.get('DISCORD_TOKEN'))
 
