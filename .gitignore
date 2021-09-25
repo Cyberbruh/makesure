@@ -140,5 +140,8 @@ cython_debug/
 # VS Code
 .vscode/
 
+# PyCharm
+.idea/
+
 # Secrets
 *token.txt
