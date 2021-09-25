@@ -17,7 +17,6 @@ import src.chatex
 from src.dispute import Dispute, DisputeStatus
 from src.proof import Proof
 from src.deposit import Deposit, DepositStatus
-from src.payout import Payout
 
 # Load variables from .env file
 load_dotenv()

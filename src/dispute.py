@@ -17,8 +17,10 @@ class DisputeStatus(Enum):
 
 
 class Dispute(Document):
-    user1_id = IntField(required=True)
-    user2_id = IntField(required=True)
+    user1_id = StringField(required=True)
+    user2_id = StringField(required=True)
+    data1 = StringField()
+    data2 = StringField()
     description = StringField(required=True)
     amount = IntField(required=True)
     status = EnumField(DisputeStatus, default=DisputeStatus.CREATED)

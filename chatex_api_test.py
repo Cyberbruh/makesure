@@ -8,7 +8,6 @@ import requests
 
 from src.dispute import *
 from src.deposit import *
-from src.payout import *
 from src.proof import *
 
 from src.chatex import *
