@@ -1,9 +1,12 @@
-FROM python:3.10-alpine
+FROM python:3.9-alpine
 
-WORKDIR /app
+RUN apk add gcc musl-dev
 
-ADD * .
+WORKDIR /usr/src/app
 
-RUN 'python -m pip install -r requirements.txt'
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["python", "main.py"]
+COPY . .
+
+CMD [ "python", "./main.py" ]
