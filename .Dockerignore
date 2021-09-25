@@ -140,8 +140,11 @@ cython_debug/
 # VS Code
 .vscode/
 
-# PyCharm
-.idea/
-
 # Secrets
 *token.txt
+
+# Unneeded files
+.gitignore
+*test.py
+dbDescription.txt
+docker-compose.yaml

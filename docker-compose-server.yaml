@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   bot:
-    build: .
+    image: ghcr.io/cyberbruh/makesure:latest
     environment:
       MONGO_USERNAME: ${MONGO_USERNAME}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
@@ -12,8 +12,6 @@ services:
       CHATEX_REFRESH_TOKEN: ${CHATEX_REFRESH_TOKEN}
     networks:
       - makesure-net
-    depends_on:
-      - mongo
   mongo:
     image: mongo
     restart: always
