@@ -13,7 +13,7 @@ deposit
     dispute_id: string
     method: int
     payment_link: str
-    status: enum(LINK_SENT, SUCCESS)
+    status: enum(CREATED, LINK_SENT, SUCCESS)
 
 payout
     id: string
