@@ -1,7 +1,9 @@
 dispute
     id: string
-    user1_id: string
-    user2_id: string
+    user1_id: int
+    user2_id: int
+    data1: string
+    data2: string
     description: string
     amount: int
     date: dateTime
@@ -14,14 +16,8 @@ deposit
     method: int
     payment_url: str
     invoice_id: string
-    coin_amount: int
+    coin_amount: float
     status: enum(CREATED, LINK_SENT, SUCCESS, CANCELED)
-
-payout
-    id: string
-    dispute: Dispute
-    data: string
-    amount: int
 
 proof
     id: string

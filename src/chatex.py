@@ -26,7 +26,7 @@ async def check_auth():
         stop_api = False
 
 async def getPaymentMethods():
-    tmp = {
+    tmp = [
         {
             "id": 347,
             "name": "QIWI"
@@ -47,7 +47,7 @@ async def getPaymentMethods():
             "id": 347,
             "name": "Ю.Мани"
         },
-    }
+    ]
     await check_auth()
     return tmp
     # request_headers = {"Authorization": "Bearer " + CHATEX_ACCESS_TOKEN}
@@ -106,7 +106,7 @@ async def makePayout(payout):
         "amount": payout.amount,
         "recipient": payout.data
     }
-    request = requests.post(CHATEX_API_LINK+'/wallet/transfers', json=request_data, headers=request_headers)
-    if(request.status_code != 200):
-        print(request_data, request, request.text)
-        raise Exception("Can't make payout")
+    # request = requests.post(CHATEX_API_LINK+'/wallet/transfers', json=request_data, headers=request_headers)
+    # if(request.status_code != 200):
+    #     print(request_data, request, request.text)
+    #     raise Exception("Can't make payout")

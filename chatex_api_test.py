@@ -8,7 +8,6 @@ import requests
 
 from src.dispute import *
 from src.deposit import *
-from src.payout import *
 from src.proof import *
 
 from src.chatex import *
@@ -30,10 +29,4 @@ async def main2():
     dep = await updatePayment(dep)
     print(dep.status)
 
-async def payout():
-    dispute = Dispute.objects().first()
-    dep = Payout(dispute=dispute, data="+79261968055", amount=0.0001)
-    dep = await makePayout(dep)
-    print(dep.status)
-
-asyncio.run(payout())
+# asyncio.run(payout())
