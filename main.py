@@ -54,10 +54,20 @@ async def dialog(usr, members):
     res = await bot.wait_for('button_click', check=from_opponent)
     if res.component.label == 'Да':
         await usr.send(f'Спор c {opponent.name} начат!')
-        await res.respond(f'Спор с {usr.name} начат!')
+        await res.respond(content=f'Спор с {usr.name} начат!')
+        await run_dispute(usr, opponent)
     else:
         await usr.send('Оппонент отклонил спор!')
-        await res.respond('Спор отклонен!')
+        await res.respond(content='Спор отклонен!')
+
+
+async def run_dispute(usr1, usr2):
+    comps = []
+    paySysList = (await src.chatex.getPaymentMethods())
+    for i in range(5):
+        comps.append(Button(style=ButtonStyle.gray, label=paySysList[i]['name']))
+    await usr1.send(embed=discord.Embed(title='Выберите платежную систему'), components=[comps])
+    await usr2.send(embed=discord.Embed(title='Выберите платежную систему'), components=[comps])
 
 
 @bot.command()
