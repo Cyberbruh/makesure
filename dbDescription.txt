@@ -7,13 +7,6 @@ disputes
     date: dateTime
     status: enum(CREATED, ACCEPTED, REJECTED, PENDING, TIE, WIN1, WIN2, REPORTED)
 
-proofs
-    id: string
-    description: string
-    user_id: string
-    dispute_id: string
-    date: dateTime
-
 deposits
     id: string
     user_id: string
@@ -28,3 +21,10 @@ payouts
     method: int
     data: string
     status: enum(CREATED, SUCCESS)
+
+proofs
+    id: string
+    description: string
+    user_id: string
+    dispute_id: string
+    date: dateTime
