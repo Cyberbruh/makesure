@@ -1,7 +1,8 @@
-import datetime
-import enum
+from datetime import *
+from enum import *
+from mongoengine import *
 
-class DisputeStatus(enum.Enum):
+class DisputeStatus(Enum):
     CREATED = 1
     ACCEPTED = 2
     REJECTED = 3
@@ -11,13 +12,10 @@ class DisputeStatus(enum.Enum):
     WIN2 = 7
     REPORTED = 8
 
-
-class Dispute:
-    def __init__(self, db, user1_id: int, user2_id: int, description: str, amount: int) -> None:
-        self.user1 = user1_id
-        self.user2 = user2_id
-        self.description = description
-        self.amount = amount
-        self.date = datetime.datetime.now()
-        self.status = DisputeStatus.CREATED
-        self.id = db.disputes.insert_one(self.__dict__).inserted_id
+class Dispute(Document):
+    user1_id = IntField(required=True)
+    user2_id = IntField(required=True)
+    description = StringField(required=True)
+    amount = IntField(required=True)
+    status = EnumField(DisputeStatus, default=DisputeStatus.CREATED)
+    date = DateTimeField(default=datetime.utcnow)

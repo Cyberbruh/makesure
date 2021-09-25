@@ -1,4 +1,4 @@
-disputes
+dispute
     id: string
     user1_id: string
     user2_id: string
@@ -7,7 +7,7 @@ disputes
     date: dateTime
     status: enum(CREATED, ACCEPTED, REJECTED, PENDING, TIE, WIN1, WIN2, REPORTED)
 
-deposits
+deposit
     id: string
     user_id: string
     dispute_id: string
@@ -15,14 +15,14 @@ deposits
     payment_link: str
     status: enum(LINK_SENT, SUCCESS)
 
-payouts
+payout
     id: string
     disput_id: string
     method: int
     data: string
     status: enum(CREATED, SUCCESS)
 
-proofs
+proof
     id: string
     description: string
     user_id: string
