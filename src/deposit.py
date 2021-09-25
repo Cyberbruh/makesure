@@ -14,7 +14,7 @@ class DepositStatus(Enum):
 
 class Deposit(Document):
     user_id = IntField(required=True)
-    disput = ReferenceField(Dispute)
+    dispute = ReferenceField(Dispute)
     method = IntField(required=True)
     payment_link = StringField(required=True)
     status = EnumField(DepositStatus, default=DepositStatus.CREATED)

@@ -12,7 +12,7 @@ class PayoutStatus(Enum):
 
 
 class Payout(Document):
-    disput = ReferenceField(Dispute)
+    dispute = ReferenceField(Dispute)
     method = IntField(required=True)
     data = StringField(required=True)
     status = EnumField(PayoutStatus, default=PayoutStatus.CREATED)
