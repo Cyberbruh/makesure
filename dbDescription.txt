@@ -10,14 +10,14 @@ dispute
 deposit
     id: string
     user_id: string
-    dispute_id: string
+    dispute: Dispute
     method: int
     payment_link: str
     status: enum(CREATED, LINK_SENT, SUCCESS)
 
 payout
     id: string
-    disput_id: string
+    dispute: Dispute
     method: int
     data: string
     status: enum(CREATED, SUCCESS)
@@ -26,5 +26,5 @@ proof
     id: string
     description: string
     user_id: string
-    dispute_id: string
+    dispute: Dispute
     date: dateTime
