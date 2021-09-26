@@ -271,10 +271,10 @@ async def solveDispute(result, dispute):
         await src.chatex.makePayout(payout1)
         await src.chatex.makePayout(payout2)
 
-async def interval_db():
-    asyncio.sleep(60)
+#async def interval_db():
+#    await asyncio.sleep(60)
 
-asyncio.run(interval_db())
+#asyncio.run(interval_db())
 
 db_connect_url = os.environ.get('MONGO_LINK')
 
