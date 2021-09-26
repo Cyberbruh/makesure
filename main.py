@@ -39,7 +39,7 @@ def check_msg(msg, usr):
     return (msg.author == usr) and isinstance(msg.channel, discord.DMChannel)
 
 
-async def dialog(usr, phone1, members):
+async def dialog(usr, requisites1, members):
     """
     Dispute creation dialog.
     """
@@ -97,11 +97,11 @@ async def dialog(usr, phone1, members):
 
         # Request opponent's phone number
         await res.author.send(
-            'Укажи, пожалуйста, свой номер телефона, привязанный к аккаунту в Chatex:')
-        phone2 = (await bot.wait_for('message', check=check_msg_opponent)).content
+            'Укажи, пожалуйста, реквизиты своего счёта (логин в Chatex, номер телефона или email):')
+        requisites2 = (await bot.wait_for('message', check=check_msg_opponent)).content
 
         # Run dispute
-        await run_dispute(usr, opponent, phone1, phone2, dispute)
+        await run_dispute(usr, opponent, requisites1, requisites2, dispute)
     # Dispute is rejected
     else:
         dispute.status = DisputeStatus.REJECTED
@@ -110,7 +110,7 @@ async def dialog(usr, phone1, members):
         await res.respond(content='Спор отклонен!')
 
 
-async def run_dispute(usr1, usr2, phone1, phone2, dispute):
+async def run_dispute(usr1, usr2, requisites1, requisites2, dispute):
     """
     Runs the dispute: processes payments and claims.
     """
@@ -120,8 +120,8 @@ async def run_dispute(usr1, usr2, phone1, phone2, dispute):
         get_payment(usr1, dispute), get_payment(usr2, dispute))
 
     # Set phone numbers of the dispute
-    dispute.data1 = str(phone1)
-    dispute.data2 = str(phone2)
+    dispute.requisites1 = str(requisites1)
+    dispute.requisites2 = str(requisites2)
     dispute.save()
 
     # Wait for users' claims
@@ -133,12 +133,12 @@ async def run_dispute(usr1, usr2, phone1, phone2, dispute):
         dispute.status = DisputeStatus.WIN1
         dispute.save()
         await asyncio.gather(
-            win(usr1, dispute, dispute.data1), lose(usr2, dispute))
+            win(usr1, dispute, dispute.requisites1), lose(usr2, dispute))
     elif (res1 == 'Проигравший') and (res2 == 'Победитель'):
         dispute.status = DisputeStatus.WIN2
         dispute.save()
         await asyncio.gather(
-            win(usr2, dispute, dispute.data1), lose(usr1, dispute))
+            win(usr2, dispute, dispute.requisites2), lose(usr1, dispute))
     elif (res1 == 'Проигравший') and (res2 == 'Проигравший'):
         dispute.status = DisputeStatus.TIE
         dispute.save()
@@ -179,7 +179,7 @@ async def get_evidence(usr, dispute):
         'Ваши доказательства приняты! Ожидайте решения судьи (в течение 24 часов)')
 
 
-async def win(usr, dispute, data):
+async def win(usr, dispute, requisites):
     """
     Process victory of a user.
     """
@@ -191,7 +191,7 @@ async def win(usr, dispute, data):
     dep = Deposit.objects(Q(user_id=usr.id) and Q(dispute=dispute.id)).first()
     payout = {
         "amount": dep.coin_amount * 2,
-        "data": data,
+        "requisites": requisites,
     }
     await src.chatex.make_payout(payout)
 
@@ -214,11 +214,11 @@ async def tie(usr1, usr2, dispute):
     dep2 = Deposit.objects(Q(user_id=usr2.id) and Q(dispute=dispute.id)).first()
     payout1 = {
         "amount": dep1.coin_amount,
-        "data": dispute.data1,
+        "requisites": dispute.requisites1,
     }
     payout2 = {
         "amount": dep2.coin_amount,
-        "data": dispute.data2,
+        "requisites": dispute.requisites2,
     }
     await src.chatex.make_payout(payout1)
     await src.chatex.make_payout(payout2)
@@ -275,20 +275,30 @@ async def get_payment(usr, dispute):
         dep.save()
         await usr.send(dep.payment_url)
 
-        # Request user payment confirmation
-        await usr.send(embed=discord.Embed(title='Нажмите на кнопку для подтверждения оплаты'), components=[[Button(style=ButtonStyle.grey, label='Подтвердить', custom_id=str(time.time()))]])
-        res = await bot.wait_for('button_click', check=check_msg_usr)
-        if res.component.label == 'Подтвердить':
-            # Check the payment
-            await res.respond(content='Проверка оплаты...')
-            dep = await src.chatex.update_payment(dep)
-            dep.save()
+        while dep.status != DepositStatus.SUCCESS:
+            # Request user payment confirmation
+            await usr.send(
+                embed=discord.Embed(
+                    title='Нажмите на кнопку для подтверждения оплаты'),
+                    components=[[
+                        Button(style=ButtonStyle.grey, label='Подтвердить оплату', custom_id=str(time.time())),
+                        Button(style=ButtonStyle.grey, label='Прислать новую ссылку', custom_id=str(time.time() + 1))
+                    ]])
+            res = await bot.wait_for('button_click', check=check_msg_usr)
+            if res.component.label == 'Подтвердить оплату':
+                # Check the payment
+                await res.respond(content='Проверка оплаты...')
+                dep = await src.chatex.update_payment(dep)
+                dep.save()
 
-            # Tell user the status of payment
-            if dep.status != DepositStatus.SUCCESS:
-                await usr.send(content='Оплата не удалась! Повторите попытку.')
+                # Tell user the status of payment
+                if dep.status != DepositStatus.SUCCESS:
+                    await usr.send(content='Оплата не удалась! Повторите попытку.')
+                else:
+                    await usr.send(content='Оплата прошла успешно! Ожидание оплаты оппонента...')
             else:
-                await usr.send(content='Оплата прошла успешно! Ожидание оплаты оппонента...')
+                # Will send new link
+                break
 
 
 @bot.command(name="start")
@@ -301,15 +311,14 @@ async def start(ctx):
 
     # Request phone number
     await ctx.author.send(
-        'Привет! Я бот для заключения споров. Введи, пожалуйста, номер'
-        + 'телефона, привязанный к твоему аккаунту в Chatex:')
-    phone_number = (await bot.wait_for('message', check=check_msg_usr)).content
+        'Укажи, пожалуйста, реквизиты своего счёта (логин в Chatex, номер телефона или email):')
+    requisites = (await bot.wait_for('message', check=check_msg_usr)).content
 
     # Request opponent's tag
     await ctx.author.send(
         'Введи тег пользователя, с которым вы хотите начать спор?')
     members = ctx.guild.members
-    await dialog(ctx.author, phone_number, members)
+    await dialog(ctx.author, requisites, members)
 
 
 @bot.command(name="admin")
@@ -399,7 +408,7 @@ async def resolve_dispute(result, dispute):
     if(result == 1):
         payout = {
             "amount": deposit1.coin_amount + deposit2.coin_amount,
-            "data": dispute.data1,
+            "requisites": dispute.requisites1,
         }
         dispute.status = DisputeStatus.WIN1
         dispute.save()
@@ -409,7 +418,7 @@ async def resolve_dispute(result, dispute):
     elif(result == 2):
         payout = {
             "amount": deposit1.coin_amount + deposit2.coin_amount,
-            "data": dispute.data2,
+            "requisites": dispute.requisites2,
         }
         dispute.status = DisputeStatus.WIN2
         dispute.save()
@@ -419,11 +428,11 @@ async def resolve_dispute(result, dispute):
     else:
         payout1 = {
             "amount": deposit1.coin_amount,
-            "data": dispute.data1,
+            "requisites": dispute.requisites1,
         }
         payout2 = {
             "amount": deposit2.coin_amount,
-            "data": dispute.data2,
+            "requisites": dispute.requisites2,
         }
         dispute.status = DisputeStatus.TIE
         dispute.save()

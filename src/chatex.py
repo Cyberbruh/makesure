@@ -147,7 +147,7 @@ async def make_payout(payout):
     request_data = {
         "coin": "btc",
         "amount": payout['amount'],
-        "recipient": payout['data']
+        "recipient": payout['requisites']
     }
 
     # Make a request
