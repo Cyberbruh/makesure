@@ -21,12 +21,12 @@ async def main():
     dispute = Dispute.objects().first()
     dep = Deposit(user_id=123, dispute=dispute, method=347)
     dep.save()
-    dep = await getPaymentLink(dep)
+    dep = await get_payment_link(dep)
     print(dep.payment_url, dep.id)
 
 async def main2():
     dep = Deposit.objects(id="614f7a1dd8cd5d1f1f52b69b").first()
-    dep = await updatePayment(dep)
+    dep = await update_payment(dep)
     print(dep.status)
 
 # asyncio.run(payout())

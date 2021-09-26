@@ -15,13 +15,14 @@ class DisputeStatus(Enum):
     REPORTED = 8 # отправлен на судейство
     JUDGING = 9 # в процессе рассмотрения
     EVIDENCE = 10 # сбор доказательств
+    CANCELED = 11
 
 
 class Dispute(Document):
     user1_id = IntField(required=True)
     user2_id = IntField(required=True)
-    data1 = StringField()
-    data2 = StringField()
+    requisites1 = StringField()
+    requisites2 = StringField()
     description = StringField(required=True)
     amount = IntField(required=True)
     status = EnumField(DisputeStatus, default=DisputeStatus.CREATED)
