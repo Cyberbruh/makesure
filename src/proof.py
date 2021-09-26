@@ -8,5 +8,5 @@ from .dispute import Dispute
 class Proof(Document):
     dispute = ReferenceField(Dispute, required=True)
     user_id = IntField(required=True)
-    description = StringField()
+    description = StringField(required=True)
     date = DateTimeField(default=datetime.utcnow)

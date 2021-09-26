@@ -5,15 +5,16 @@ from mongoengine import (
 
 
 class DisputeStatus(Enum):
-    CREATED = 1
-    ACCEPTED = 2
-    REJECTED = 3
-    PENDING = 4
-    TIE = 5
+    CREATED = 1 # только созданный спор
+    ACCEPTED = 2 # принятый спор
+    REJECTED = 3 # отклоненный спор
+    PENDING = 4 # после оплаты обоих
+    TIE = 5 # ничья
     WIN1 = 6
     WIN2 = 7
-    REPORTED = 8
-    JUDGING = 9
+    REPORTED = 8 # отправлен на судейство
+    JUDGING = 9 # в процессе рассмотрения
+    EVIDENCE = 10 # сбор доказательств
 
 
 class Dispute(Document):
