@@ -15,6 +15,7 @@ class DisputeStatus(Enum):
     REPORTED = 8 # отправлен на судейство
     JUDGING = 9 # в процессе рассмотрения
     EVIDENCE = 10 # сбор доказательств
+    CANCELED = 11
 
 
 class Dispute(Document):

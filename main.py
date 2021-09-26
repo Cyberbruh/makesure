@@ -115,14 +115,18 @@ async def run_dispute(usr1, usr2, requisites1, requisites2, dispute):
     Runs the dispute: processes payments and claims.
     """
     
-    # Wait for the payments
-    await asyncio.gather(
-        get_payment(usr1, dispute), get_payment(usr2, dispute))
-
-    # Set phone numbers of the dispute
+    # Set requisites of the dispute
     dispute.requisites1 = str(requisites1)
     dispute.requisites2 = str(requisites2)
     dispute.save()
+
+    # Wait for the payments
+    await asyncio.gather(
+        get_payment(usr1, dispute), get_payment(usr2, dispute))
+    
+    dispute = Dispute.objects.get(pk=dispute.id)
+    if dispute.status == DisputeStatus.CANCELED:
+        return
 
     # Wait for users' claims
     res1, res2 = await asyncio.gather(
@@ -188,7 +192,7 @@ async def win(usr, dispute, requisites):
     await usr.send(f'Поздравляю, ты выиграл(а). Тебе будет перечислено {2*dispute.amount} тугриков.')
 
     # Make the payout
-    dep = Deposit.objects(Q(user_id=usr.id) and Q(dispute=dispute.id)).first()
+    dep = Deposit.objects(Q(user_id=usr.id) & Q(dispute=dispute.id)).first()
     payout = {
         "amount": dep.coin_amount * 2,
         "requisites": requisites,
@@ -210,8 +214,8 @@ async def tie(usr1, usr2, dispute):
     await usr2.send('Ничья. Твои средства будут возвращены на твой аккаунт Chatex')
 
     # Make the payouts
-    dep1 = Deposit.objects(Q(user_id=usr1.id) and Q(dispute=dispute.id)).first()
-    dep2 = Deposit.objects(Q(user_id=usr2.id) and Q(dispute=dispute.id)).first()
+    dep1 = Deposit.objects(Q(user_id=usr1.id) & Q(dispute=dispute.id)).first()
+    dep2 = Deposit.objects(Q(user_id=usr2.id) & Q(dispute=dispute.id)).first()
     payout1 = {
         "amount": dep1.coin_amount,
         "requisites": dispute.requisites1,
@@ -260,11 +264,20 @@ async def get_payment(usr, dispute):
         # TODO: Rewrite that
         # Begin of govnocode
         ids = dict()
-        for i in range(5):
+        for i in range(4):
             components.append(Button(style=ButtonStyle.grey, label=payment_methods[i]['name'], custom_id=str(time.time() + i)))
             ids[payment_methods[i]['name']] = payment_methods[i]['id']
+        # Add cancel button
+        components.append(Button(style=ButtonStyle.red, label='Отмена', custom_id=str(time.time() + 10)))
+
         await usr.send(embed=discord.Embed(title='Выберите платежную систему'), components=[components])
-        res = await bot.wait_for('button_click', check=check_msg_usr)
+        res = await bot.wait_for('button_click', check=check_msg_usr)   
+        dispute = Dispute.objects.get(pk=dispute.id)
+        if dispute.status == DisputeStatus.CANCELED:
+            return
+        if res.component.label == 'Отмена':
+            await cancel_dispute(dispute, usr)
+            return
         dep.method = 347
         dep.save()
         # End of govnocode
@@ -282,9 +295,19 @@ async def get_payment(usr, dispute):
                     title='Нажмите на кнопку для подтверждения оплаты'),
                     components=[[
                         Button(style=ButtonStyle.grey, label='Подтвердить оплату', custom_id=str(time.time())),
-                        Button(style=ButtonStyle.grey, label='Прислать новую ссылку', custom_id=str(time.time() + 1))
+                        Button(style=ButtonStyle.grey, label='Прислать новую ссылку', custom_id=str(time.time() + 1)),
+                        Button(style=ButtonStyle.red, label='Отмена', custom_id=str(time.time() + 2))
                     ]])
             res = await bot.wait_for('button_click', check=check_msg_usr)
+            dispute = Dispute.objects.get(pk=dispute.id)
+            if dispute.status == DisputeStatus.CANCELED:
+                await res.respond(content='Спор отменён')
+                return
+            
+            if res.component.label == 'Отмена':
+                await cancel_dispute(dispute, usr)
+                return
+
             if res.component.label == 'Подтвердить оплату':
                 # Check the payment
                 await res.respond(content='Проверка оплаты...')
@@ -299,6 +322,57 @@ async def get_payment(usr, dispute):
             else:
                 # Will send new link
                 break
+
+
+async def cancel_dispute(dispute, init_usr):
+    """
+    Processes cancel of dispute
+    """
+
+    # Get users
+    user1 = bot.get_user(dispute.user1_id)
+    user2 = bot.get_user(dispute.user2_id)
+
+    # Notify users about the cancellation
+    await user1.send(f'{init_usr.name} решил отменить спор. Возвращаем деньги, если была оплата...')
+    await user2.send(f'{init_usr.name} решил отменить спор. Возвращаем деньги, если была оплата...')
+
+    # Get deposits
+    dep1 = Deposit.objects(Q(user_id=user1.id) & Q(dispute=dispute.id)).first()
+    dep2 = Deposit.objects(Q(user_id=user2.id) & Q(dispute=dispute.id)).first()
+
+    # Check payments
+    if dep1 is not None:
+        if dep1.status != DepositStatus.CANCELED:
+            dep1 = await src.chatex.update_payment(dep1)
+            dep1.save()
+    if dep2 is not None:
+        if dep2.status != DepositStatus.CANCELED:
+            dep2 = await src.chatex.update_payment(dep2)
+            dep2.save()
+
+    if dep1 is not None:
+        if dep1.status == DepositStatus.SUCCESS:
+            payout = {
+                "amount": dep1.coin_amount,
+                "requisites": dispute.requisites1,
+            }
+            await src.chatex.make_payout(payout)
+            dep1.status = DepositStatus.CANCELED
+            dep1.save()
+
+    if dep2 is not None:
+        if dep2.status == DepositStatus.SUCCESS:
+            payout = {
+                "amount": dep2.coin_amount,
+                "requisites": dispute.requisites2,
+            }
+            await src.chatex.make_payout(payout)
+            dep2.status = DepositStatus.CANCELED
+            dep2.save()
+    
+    dispute.status = DisputeStatus.CANCELED
+    dispute.save()
 
 
 @bot.command(name="start")
@@ -402,8 +476,8 @@ async def resolve_dispute(result, dispute):
     user2 = bot.get_user(dispute.user2_id)
     if(user1 is None or user2 is None):
         return
-    deposit1 = Deposit.objects(Q(user_id=dispute.user1_id) and Q(dispute=dispute.id)).first()
-    deposit2 = Deposit.objects(Q(user_id=dispute.user2_id) and Q(dispute=dispute.id)).first()
+    deposit1 = Deposit.objects(Q(user_id=dispute.user1_id) & Q(dispute=dispute.id)).first()
+    deposit2 = Deposit.objects(Q(user_id=dispute.user2_id) & Q(dispute=dispute.id)).first()
     
     if(result == 1):
         payout = {
